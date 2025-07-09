@@ -7,9 +7,15 @@ export interface Task {
   url: string;
   reward: number;
   expires_at: string | null;
+  description?: string;
 }
 
-export const fetchTasks = (type: string) => API.get<Task[]>(`/tasks?type=${type}`);
+// ✅ Fetch tasks by type
+export const fetchTasks = (type: string) => 
+  API.get<Task[]>(`/tasks?type=${type}`);
 
-export const completeTask = (taskId: number, proof: any = {}) =>
-  API.post<{ reward: number }>(`/tasks/${taskId}/complete`, { proof });
+// ✅ Complete a task with proof (required)
+export const completeTask = (taskId: number, proof: string) =>
+  API.post<{ reward: number; newPoints: number }>(`/tasks/${taskId}/complete`, {
+    proof, // proof must be a string like 'Done' or an actual proof link
+  });

@@ -14,29 +14,23 @@ const TasksScreen = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { list: tasks, status } = useSelector((s: RootState) => s.tasks);
   const [snack, setSnack] = useState<{ open: boolean; msg: string }>({ open: false, msg: '' });
-  
-  
   const [activeTab, setActiveTab] = useState('daily');
 
- 
   useEffect(() => {
     dispatch(loadTasks(activeTab));
   }, [dispatch, activeTab]);
 
   const handleGoToTask = (task: any) => {
-
     window.open(task.url, '_blank', 'noopener,noreferrer');
-    
-
     localStorage.setItem(`task:${task.id}:startedAt`, String(Date.now()));
-
     setSnack({ open: true, msg: 'Task started! Come back later to claim.' });
   };
 
   const handleClaim = async (taskId: number) => {
-    const action = await dispatch(markTaskComplete({ taskId, proof: {} })) as any;
+    const action = await dispatch(markTaskComplete({ taskId, proof: 'auto-proof' })) as any;
     if (markTaskComplete.fulfilled.match(action)) {
       setSnack({ open: true, msg: `You earned ${action.payload.reward} points!` });
+      localStorage.removeItem(`task:${taskId}:startedAt`);
     } else {
       setSnack({ open: true, msg: `Couldn’t claim: ${action.error.message}` });
     }
@@ -47,25 +41,23 @@ const TasksScreen = () => {
   const renderCard = (task: any) => {
     const startedAt = Number(localStorage.getItem(`task:${task.id}:startedAt`)) || 0;
     const elapsed = now - startedAt;
-    // Example: 1 hour timer. You can make this dynamic based on the task later.
-    const oneHour = 1000 * 60 * 60; 
+    const oneHour = 1000 * 60 * 60;
     const isClaimable = startedAt > 0 && elapsed >= oneHour;
 
     let btnText: React.ReactNode = 'Go';
-    let onClick = () => handleGoToTask(task);
+    let onClick: (() => void) | undefined = () => handleGoToTask(task);
 
     if (isClaimable) {
       btnText = 'Claim';
       onClick = () => handleClaim(task.id);
     } else if (startedAt > 0) {
       btnText = 'Pending';
-      onClick = () => {}; // Disable button while pending
+      onClick = undefined;
     }
 
     return (
       <GameCard
         key={task.id}
-        // 4. Use the new description for the main text
         mainText={task.description}
         secondaryText={`+${task.reward} FP`}
         className={styles.gameCard}
@@ -83,7 +75,6 @@ const TasksScreen = () => {
           <Title level={'2'}>Tasks</Title>
         </div>
 
-        {/* 5. Add the Tab UI */}
         <div className={styles.tabs}>
           {TASK_TYPES.map((type) => (
             <button
@@ -100,14 +91,15 @@ const TasksScreen = () => {
         {status === 'succeeded' && (
           <div className={styles.taskList}>
             {tasks.length > 0 ? (
-                tasks.map(renderCard)
+              tasks.map(renderCard)
             ) : (
-                <div>No tasks available for this category.</div>
+              <div>No tasks available for this category.</div>
             )}
           </div>
         )}
         {status === 'failed' && <div>Error loading tasks. Please try again.</div>}
       </div>
+
       <BottomBar />
       <SnackBar
         open={snack.open}

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchTasks, completeTask } from '../../services/tasksService'
+import { fetchTasks, completeTask } from '../../services/tasksService';
 
 export const loadTasks = createAsyncThunk('tasks/loadTasks', async (type: string) => {
   const { data } = await fetchTasks(type);
@@ -8,8 +8,8 @@ export const loadTasks = createAsyncThunk('tasks/loadTasks', async (type: string
 
 export const markTaskComplete = createAsyncThunk(
   'tasks/markComplete',
-  async ({ taskId, proof }: { taskId: number; proof: object }) => {
-    const { data } = await completeTask(taskId, proof);
+  async ({ taskId, proof }: { taskId: number; proof: string }) => {
+    const { data } = await completeTask(taskId, proof); // proof is a string now
     return { taskId, reward: data.reward };
   }
 );
